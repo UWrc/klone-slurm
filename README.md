@@ -1,19 +1,15 @@
-# Tillicum Slurm Tutorial
+# Klone Slurm Tutorial
 
 ## Overview
 
-High-performance computing (HPC) clusters like **Tillicum** use a **job scheduler** to manage and optimize the allocation of compute resources. A scheduler coordinates how and when jobs are executed across available CPUs, GPUs, memory, and nodes, ensuring efficient and fair use of the system.
+High-performance computing (HPC) clusters like **Klone** use a **job scheduler** to manage and optimize the allocation of compute resources. A scheduler coordinates how and when jobs are executed across available CPUs, GPUs, memory, and nodes, ensuring efficient and fair use of the system.
 
 **Slurm** (Simple Linux Utility for Resource Management): the job scheduler used across Hyak clusters, including Tillicum. It handles job submission, resource allocation, and queueing, enabling thousands of users to share the cluster efficiently. For detailed reference, visit the [Slurm documentation](https://slurm.schedmd.com/documentation.html).
 
-Tillicum is a **GPU-only** cluster designed for compute- and AI-intensive workloads. All jobs must request at least one GPU with Slurm.
+Hyak Klone is a an HPC cluster [TO-DO - Update]
 
 🎯 **By completing this tutorial, you’ll learn how to:**
-- Submit and run interactive and batch jobs with Slurm
-- Understand QOS (Quality of Service) and resource billing on Tillicum
-- Monitor job status and resource usage
-- Write Bash scripts to set up your workflows
-- Launch array jobs for parallel workloads
+
 
 ## Repository Structure
 
@@ -30,16 +26,16 @@ Each topic in this tutorial is contained in its own Markdown file for easy navig
 
 ## Introduction Video
 
-Link to introduction video (recorded on October 22), which reviews the materials and concepts: https://youtu.be/SN8xmxg62t8
+The video link from the live tutorial will be added here. 
 
 ## Feedback
 
-We’d love your feedback to help improve this tutorial and future Tillicum trainings. After completing the tutorial or attending the workshop, please take a moment to fill out our [feedback form](https://forms.office.com/r/df5DkALpZA).
+Feedback link coming soon. 
 
 ## Additional Resources
 
-- [Tillicum Documentation](https://hyak.uw.edu/docs/tillicum/)
+- [Hyak Klone Documentation](https://hyak.uw.edu/docs/klone/)
 - [Slurm Documentation](https://slurm.schedmd.com/documentation.html)
-- Previous Hyak Slurm tutorials:
+- Previous Hyak Klone Slurm tutorials:
   - [Basic Slurm](https://hyak.uw.edu/docs/hyak101/basics/syllabus_slurm)
   - [Advanced Slurm](https://hyak.uw.edu/docs/hyak101/basics/syllabus_advanced)
