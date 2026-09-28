@@ -6,10 +6,10 @@ High-performance computing (HPC) clusters like **Klone** use a **job scheduler**
 
 **Slurm** (Simple Linux Utility for Resource Management): the job scheduler used across Hyak clusters, including Tillicum. It handles job submission, resource allocation, and queueing, enabling thousands of users to share the cluster efficiently. For detailed reference, visit the [Slurm documentation](https://slurm.schedmd.com/documentation.html).
 
-Hyak Klone is a an HPC cluster [TO-DO - Update]
+Hyak Klone is a an HPC cluster [TO DO - Update]
 
 🎯 **By completing this tutorial, you’ll learn how to:**
-
+[TO DO]
 
 ## Repository Structure
 
@@ -30,7 +30,7 @@ The video link from the live tutorial will be added here.
 
 ## Feedback
 
-Feedback link coming soon. 
+We’d love your feedback to help improve this tutorial and future trainings. After completing the tutorial or attending the workshop, please take a moment to fill out our [feedback survey](https://forms.cloud.microsoft/r/pvcRwSb2th)
 
 ## Additional Resources
 
