@@ -1,16 +1,21 @@
 #!/bin/bash
 
 #SBATCH --job-name=loop_array
-#SBATCH --qos=normal
-#SBATCH --gpus=1
-#SBATCH --mem=10G
+#SBATCH --partition=ckpt-all
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=1G
 #SBATCH --time=00:05:00
-#SBATCH --array=0-9
+#SBATCH --array=0-9%2
 #SBATCH --output=logs/%x_%A_%a.out
+
+# Submit from the repository directory with --account=<your_account>.
+set -euo pipefail
 
 # Each array task runs the same code with different ranges of numbers.
 # COUNT sets the number of iterations per task.
-# 5000000 iterations takes about 30 seconds to complete.
+# Runtime varies with the CPU model and system load.
 COUNT=5000000
 
 # Use the array index SLURM_ARRAY_TASK_ID to set up the starting and ending point for each task.

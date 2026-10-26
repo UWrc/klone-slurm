@@ -1,6 +1,6 @@
 # Running Jobs with Bash Scripts
 
-Bash scripts allow you to automate, reproduce, and document how your jobs run on Tillicum.
+Bash scripts allow you to automate, reproduce, and document how your jobs run on Klone.
 
 Instead of typing every command interactively, you can write your job instructions once and submit them as a batch script. Slurm will then execute the script for you on a compute node when resources become available.
 
@@ -19,7 +19,7 @@ View the contents of the example script:
 cat loop_script.sh
 ```
 
-Ouput:
+Output:
 
 ```bash
 #!/bin/bash
@@ -45,7 +45,7 @@ done
 - `for` loop: Iterates from the start to the end value.
 - `echo`: Prints a message once the loop completes.
 
-To run it interactively, use `./` with the desired starting and ending values:
+First obtain a CPU allocation as shown in [scheduling jobs](./01-scheduling-jobs.md#interactive-cpu-jobs). To run it interactively on the compute node, use `./` with the desired starting and ending values:
 
 ```bash
 ./loop_script.sh 0 1000000
@@ -92,11 +92,16 @@ Let's look at a minimal working example `loop_job.slurm`:
 #!/bin/bash
 
 #SBATCH --job-name=loop_job
-#SBATCH --qos=normal
-#SBATCH --gpus=1
-#SBATCH --mem=100G
+#SBATCH --partition=ckpt-all
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=1G
 #SBATCH --time=00:10:00
 #SBATCH --output=logs/slurm-%j.out
+
+# Submit from the repository directory with --account=<your_account>.
+set -euo pipefail
 
 # Print environment info
 echo "Running on host: $(hostname)"
@@ -117,10 +122,16 @@ echo "Job finished at: $(date)"
 
 > 💡 **TIP:** All #SBATCH directives must appear before the first executable command in the script.
 
+Return to the login node with `exit` if you are still in an interactive allocation. From the repository directory, create the log directory before submission:
+
+```bash
+mkdir -p logs
+```
+
 Submit the job with:
 
 ```bash
-sbatch loop_job.slurm
+sbatch --account="$MY_ACCOUNT" loop_job.slurm
 ```
 
 Check job output:
@@ -132,14 +143,14 @@ cat logs/slurm-<job_id>.out
 Example output:
 
 ```bash
-Running on host: g001
-Job started at: Mon Oct 20 10:08:46 PDT 2025
+Running on host: n3000
+Job started at: <start time>
 Sequence complete! Iterations from 0 to 1000000.
 
 real    0m2.762s
 user    0m2.756s
 sys     0m0.000s
-Job finished at: Mon Oct 20 10:08:49 PDT 2025
+Job finished at: <finish time>
 ```
 
 > 💡 **TIP:** Use `less` or `tail -f` for large files or to monitor output in real time.
@@ -154,32 +165,39 @@ Example `loop_var.slurm`:
 #!/bin/bash
 
 #SBATCH --job-name=loop_var
-#SBATCH --qos=normal
-#SBATCH --gpus=1
-#SBATCH --mem=100G
+#SBATCH --partition=ckpt-all
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=1G
 #SBATCH --time=00:10:00
 #SBATCH --output=logs/slurm-%j.out
 
+# Submit from the repository directory with --account=<your_account>.
+set -euo pipefail
+
 # Define variables
-WORKDIR="/gpfs/scrubbed/$USER/tillicum-slurm"
+WORKDIR="$SLURM_SUBMIT_DIR"
 SCRIPT="loop_script.sh"
 
 echo "Working directory: $WORKDIR"
-cd $WORKDIR
+cd "$WORKDIR"
 
 # Run Bash script
-time ./$SCRIPT 0 1000000
+time "./$SCRIPT" 0 1000000
 
 echo "Job completed successfully!"
 ```
+
+`SLURM_SUBMIT_DIR` is the directory from which you called `sbatch`; submit from the repository root. Quote variable expansions used as paths. Shell variables are expanded in commands, but Slurm does not expand `$USER` or `$MY_ACCOUNT` inside `#SBATCH` directives. Pass the account on the command line as shown above.
 
 ## Loading Modules and Setting Environment
 
 **Loading modules**
 
-Most HPC software relies on modules and environment variables to configure runtime environments. See [Software Environment on Tillicum](https://hyak.uw.edu/docs/tillicum/environment) for more details on how modules are managed on Tillicum.
+Most HPC software relies on modules and environment variables to configure runtime environments. See [Software Environment on Klone](https://hyak.uw.edu/docs/guides/software/modules/) for more details on how modules are managed on Klone.
 
-You can safely load them inside your job script before running commands.
+On Klone, modules are available on compute nodes, including inside batch jobs. Load them there before running commands. The loop examples use Bash alone and need no modules.
 
 Example:
 
@@ -201,14 +219,14 @@ You can also export custom variables that your job needs:
 
 ```bash
 # Example for OpenMP parallelization
-export OMP_NUM_THREADS=8
+export OMP_NUM_THREADS="$SLURM_CPUS_PER_TASK"
 ```
 
-These variables are inherited by all processes started during the job.
+This matches an OpenMP program's thread count to `--cpus-per-task`. It does not turn a serial Bash loop into a parallel program. Exported variables are inherited by child processes.
 
 ## Output and Error Files
 
-By default, both standard output and standard error are directed to a file named `slurm-%j.out`, where the `%j` is replaced with your job ID. For job arrays, the default file name is `slurm-%A_%a.out`, where "%A" is replaced by the job ID and "%a" with the array index. 
+By default, both standard output and standard error are directed to a file named `slurm-%j.out`, where the `%j` is replaced with your job ID. For job arrays, the default file name is `slurm-%A_%a.out`, where "%A" is replaced by the job ID and "%a" with the array index.
 
 Explicitly specify `--output` and `--error` flags to save standard output and error files separately:
 
@@ -217,7 +235,7 @@ Explicitly specify `--output` and `--error` flags to save standard output and er
 #SBATCH --error=logs/slurm_%j.err
 ```
 
-This approach helps organize job logs by job ID under a designated directory such as `logs/`.
+**Create `logs/` with `mkdir -p logs` before calling `sbatch`.** Slurm opens log files before executing the script, so creating the directory inside the job is too late.
 
 To control whether Slurm appends or overwrites existing files:
 
@@ -228,7 +246,7 @@ To control whether Slurm appends or overwrites existing files:
 Within your job script, you can also redirect the output of individual commands using standard shell redirection `>` (or `>>` for appending):
 
 ```bash
-time ./$SCRIPT 0 1000000 > output.txt
+time "./$SCRIPT" 0 1000000 > output.txt
 ```
 
 This writes all standard output from the command to `output.txt`.

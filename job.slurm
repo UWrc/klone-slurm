@@ -1,13 +1,17 @@
 #!/bin/bash
 
 #SBATCH --job-name=myjob
-#SBATCH --qos=normal
-#SBATCH --gpus=2
-#SBATCH --cpus-per-task=16
-#SBATCH --mem=400G
-#SBATCH --time=01:00:00
+#SBATCH --partition=ckpt-all
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=1G
+#SBATCH --time=00:05:00
 #SBATCH --output=slurm-%j.out
 
+# Submit from the repository directory with --account=<your_account>.
+set -euo pipefail
+
 hostname
-nvidia-smi
-sleep 1200
+echo "Job $SLURM_JOB_ID running on $(hostname)"
+sleep 30

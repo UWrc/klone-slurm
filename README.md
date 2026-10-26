@@ -1,41 +1,50 @@
-# Klone Slurm Tutorial
+# Klone Slurm Training 2026
 
-## Overview
+High-performance computing (HPC) clusters use a job scheduler to share CPUs, GPUs, memory, and nodes among users. Klone uses [Slurm](https://slurm.schedmd.com/documentation.html) for resource allocation, job submission, and queueing.
 
-High-performance computing (HPC) clusters like **Klone** use a **job scheduler** to manage and optimize the allocation of compute resources. A scheduler coordinates how and when jobs are executed across available CPUs, GPUs, memory, and nodes, ensuring efficient and fair use of the system.
+Klone is Hyak's general-purpose HPC cluster, with CPU and GPU partitions and multiple hardware generations. Groups have priority access to the resources they contribute through a condo model. Checkpoint partitions also let users run on idle resources, subject to preemption. See [Scheduling Jobs on Klone](https://hyak.uw.edu/docs/systems/klone/scheduling-jobs/).
 
-**Slurm** (Simple Linux Utility for Resource Management): the job scheduler used across Hyak clusters, including Tillicum. It handles job submission, resource allocation, and queueing, enabling thousands of users to share the cluster efficiently. For detailed reference, visit the [Slurm documentation](https://slurm.schedmd.com/documentation.html).
+By completing this tutorial, you will learn to:
 
-Hyak Klone is a an HPC cluster [TO DO - Update]
+- Discover your accounts and partitions with `hyakalloc`.
+- Request interactive CPU and GPU sessions and submit batch jobs.
+- Inspect job status, resource requests, and completed-job accounting.
+- Write Bash workflows and run independent tasks with Slurm arrays.
+- Choose resource sizes and understand checkpoint/preemption behavior.
 
-🎯 **By completing this tutorial, you’ll learn how to:**
-[TO DO]
+The core exercises use one CPU and require no GPU software. An optional PyTorch exercise introduces GPU requests and containers.
 
 ## Repository Structure
 
-Each topic in this tutorial is contained in its own Markdown file for easy navigation:
-
 | Section | Description |
 | :- | :- |
-| [00-preparation.md](./00-preparation.md) | Logging in via SSH and setting up your working directory |
-| [01-scheduling-jobs.md](./01-scheduling-jobs.md) | Introducing Slurm basics for scheduling interactive and batch jobs |
-| [02-monitoring-resource.md](./02-monitoring-resource.md) | Understanding usage accounting and job monitoring tools |
-| [03-bash-scripts.md](./03-bash-scripts.md) | Writing and using Bash scripts to manage your workflows |
-| [04-job-arrays.md](./04-job-arrays.md) | Leveraging job arrays for large-scale or parameter-sweep tasks |
-| [05-task.md](./05-task.md) | Hands-on exercise: submit and monitor your own jobs on Tillicum |
+| [00-preparation.md](./00-preparation.md) | SSH login, Klone storage, repository setup, and account selection |
+| [01-scheduling-jobs.md](./01-scheduling-jobs.md) | Accounts, partitions, checkpoint jobs, and interactive/batch scheduling |
+| [02-monitoring-resource.md](./02-monitoring-resource.md) | Job status, accounting, and resource efficiency |
+| [03-bash-scripts.md](./03-bash-scripts.md) | Bash workflows, variables, modules, and logs |
+| [04-job-arrays.md](./04-job-arrays.md) | Independent CPU tasks using job arrays |
+| [05-task.md](./05-task.md) | Hands-on CPU exercises and optional GPU/PyTorch jobs |
 
-## Introduction Video
+## Before Submitting Examples
 
-The video link from the live tutorial will be added here. 
+Follow [preparation](./00-preparation.md) first. Run all `sbatch` commands from the repository directory, create `logs/` before submission, and pass your account with `--account="$MY_ACCOUNT"`. The scripts default to `ckpt-all`; use a partition listed for your account by `hyakalloc` for priority access.
 
-## Feedback
+For the optional GPU exercise, you need a CUDA-enabled PyTorch SIF accessible on Klone. [The exercise](./05-task.md#optional-gpu-jobs-with-pytorch) explains how to supply its path; no shared workshop image is assumed.
 
-We’d love your feedback to help improve this tutorial and future trainings. After completing the tutorial or attending the workshop, please take a moment to fill out our [feedback survey](https://forms.cloud.microsoft/r/pvcRwSb2th)
+## Instructor Preparation
+
+Before the workshop, verify the account/partition available to attendees and test the examples on Klone. Prefer a suitable priority partition for live interactive work when available. For the optional exercise, provide and test a PyTorch SIF compatible with the selected GPU type and driver, and share its absolute path. This repository does not provision accounts or download a container automatically.
+
+## Recording and Feedback
+
+The 2026 recording link will be added after the workshop. Please share feedback through our [feedback survey](https://forms.cloud.microsoft/r/pvcRwSb2th).
 
 ## Additional Resources
 
-- [Hyak Klone Documentation](https://hyak.uw.edu/docs/klone/)
+- [Klone Documentation](https://hyak.uw.edu/docs/systems/klone/)
+- [Scheduling Jobs](https://hyak.uw.edu/docs/systems/klone/scheduling-jobs/)
+- [GPUs on Klone](https://hyak.uw.edu/docs/systems/klone/gpus/)
+- [Storage on Klone](https://hyak.uw.edu/docs/systems/klone/storage/)
+- [Software Modules](https://hyak.uw.edu/docs/guides/software/modules/)
+- [Python and Conda](https://hyak.uw.edu/docs/guides/software/conda-python/)
 - [Slurm Documentation](https://slurm.schedmd.com/documentation.html)
-- Previous Hyak Klone Slurm tutorials:
-  - [Basic Slurm](https://hyak.uw.edu/docs/hyak101/basics/syllabus_slurm)
-  - [Advanced Slurm](https://hyak.uw.edu/docs/hyak101/basics/syllabus_advanced)

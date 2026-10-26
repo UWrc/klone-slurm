@@ -1,7 +1,7 @@
 import sys
 import time
 
-print("Starting Tillicum Python demo job...")
+print("Starting Klone Python demo job...")
 print(f"Python version: {sys.version.split()[0]}")
 
 print("Checking CUDA availability...")

@@ -1,62 +1,55 @@
 # Preparation
 
-Before beginning the tutorial, let’s log in to Tillicum and set up a working directory where you’ll clone the training repository and store outputs for this tutorial.
+You need an active Klone account and an SSH client (Terminal on macOS/Linux or PowerShell on Windows).
 
-## Log in to `tillicum`
+## Log in to Klone
 
-Connect to Tillicum via SSH from your terminal/Windows Powershell:
-
-```bash
-# Replace "UWNetID" with your actual UW NetID.
-ssh UWNetid@tillicum.hyak.uw.edu
-```
-
-If successful, you should see a prompt like:
+Replace `UWNetID` with your UW NetID:
 
 ```bash
-[UWNetID@tillicum-login01 ~]$
+ssh UWNetID@klone.hyak.uw.edu
 ```
+
+You will land on a shared login node, such as `klone-login01`. Use login nodes to navigate files, transfer data, and prepare or submit jobs. Run computations and load software modules only after obtaining a compute node.
 
 ## Create Your Working Directory
 
-All tutorial exercises will be done in your own working directory.
-We recommend starting your working directory in a filesystem location where you have a large storage quota, rather than starting in your Home directory (limited to 10 GB; [Click here to learn more about storage limits on Tillicum](https://hyak.uw.edu/docs/tillicum/storage#user-storage)). 
+Klone uses `/gscratch` (also accessible as `/mmfs1/gscratch`). For this tutorial, use the temporary community space `/gscratch/scrubbed`, or a directory in your group's project space.
 
-For this tutorial, we will use Tillicum's free community storage under `/gpfs/scrubbed` for the working directory.
-
-**1. Navigate to `/gpfs/scrubbed`**
+Home directories have a 10 GB quota. Scrubbed files are automatically deleted after 21 days of inactivity, and Klone storage is not backed up. Copy results you need to keep to an appropriate external location. See [Storage on Klone](https://hyak.uw.edu/docs/systems/klone/storage/).
 
 ```bash
-cd /gpfs/scrubbed/
-```
-
-**2. Create and enter your own directory under `/gpfs/scrubbed`**
-
-```bash
-mkdir $USER
-cd $USER
-```
-
-> 📝 **NOTE:** The `$USER` variable automatically expands to your username.
-
-**3. Clone the training repository**
-
-Clone the Tillicum Slurm training materials into your working directory:
-
-```bash
-git clone https://github.com/UWrc/tillicum-slurm.git
-```
-
-Once cloned, you’ll have a directory named `tillicum-slurm` containing all tutorial scripts and examples.
-
-Navigate into it to get started:
-
-```bash
-cd tillicum-slurm
-```
-
-List the contents in the directory:
-
-```bash
+mkdir -p "/gscratch/scrubbed/$USER"
+cd "/gscratch/scrubbed/$USER"
+git clone https://github.com/UWrc/klone-slurm.git
+cd klone-slurm
+mkdir -p logs
 ls
 ```
+
+`$USER` expands to your username. **Create `logs/` before submitting any job that writes there.** Slurm opens output files before the script runs; it does not create missing parent directories.
+
+## Identify Your Account and Partitions
+
+```bash
+hyakalloc
+sinfo -s
+```
+
+`hyakalloc` shows your accounts, contributed resources, and utilization. An account is your lab/group allocation; a partition is a pool of hardware. Seeing a partition in `sinfo` does not mean your account has priority access to it.
+
+Set the following to an actual account from `hyakalloc`, or the account provided by your instructor:
+
+```bash
+# Replace mylab with your actual account name.
+export MY_ACCOUNT=mylab
+```
+
+Use `--account="$MY_ACCOUNT"` in the tutorial commands. Set it again if you open a new login shell. The example scripts use `ckpt-all` for idle resources; these jobs may wait or be preempted. If your account has a suitable priority partition, override the script default at submission:
+
+```bash
+# Example only: use compute only if hyakalloc lists it for your account.
+sbatch --account="$MY_ACCOUNT" --partition=compute job.slurm
+```
+
+Always submit from the `klone-slurm` directory so relative script and log paths resolve correctly.

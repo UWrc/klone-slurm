@@ -1,6 +1,6 @@
 # Parallel Computing with Array Jobs
 
-Running multiple independent tasks in parallel is a core strength of HPC systems like Tillicum. Slurm provides built-in mechanisms for parallel execution, from **job arrays** for parameter sweeps to **distributed jobs** using MPI.
+Running multiple independent tasks in parallel is a core strength of HPC systems like Klone. Slurm provides built-in mechanisms for parallel execution, from **job arrays** for parameter sweeps to **distributed jobs** using MPI.
 
 In this section, we’ll work through a complete example using Slurm job arrays. Harnessing the power of parallel computing allows you to efficiently launch and manage many similar jobs - such as processing multiple input files, training several models, or running parameter scans - in a single submission. The script presented can be used as a template and adapted for your purposes.
 
@@ -10,6 +10,8 @@ An array job is a convenient way to run the same command multiple times with dif
 This is common when testing different configurations in simulations, running analyses across datasets, or performing parameter sweeps in ML training.
 
 Let's run an array job with `loop_array.slurm` in your working directory.
+
+Submit from the repository directory on the login node. This is CPU-only work, so each task requests one CPU and no GPUs. Runtime varies by node; the sample timings below are illustrative.
 
 ## Example Slurm Script for Array Job
 
@@ -23,16 +25,21 @@ nano loop_array.slurm
 #!/bin/bash
 
 #SBATCH --job-name=loop_array
-#SBATCH --qos=normal
-#SBATCH --gpus=1
-#SBATCH --mem=10G
+#SBATCH --partition=ckpt-all
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=1
+#SBATCH --mem=1G
 #SBATCH --time=00:05:00
-#SBATCH --array=0-9
+#SBATCH --array=0-9%2
 #SBATCH --output=logs/%x_%A_%a.out
+
+# Submit from the repository directory with --account=<your_account>.
+set -euo pipefail
 
 # Each array task runs the same code with different ranges of numbers.
 # COUNT sets the number of iterations per task.
-# 5000000 iterations takes about 30 seconds to complete.
+# Runtime varies with the CPU model and system load.
 COUNT=5000000
 
 # Use the array index SLURM_ARRAY_TASK_ID to set up the starting and ending point for each task.
@@ -47,18 +54,18 @@ echo "Task $SLURM_ARRAY_TASK_ID completed at $(date)"
 ```
 
 **Explanation:**
-- `#SBATCH --array=0-9`: Creates an array of 10 tasks (IDs 0 through 9). Each runs the same script with different input values determined by the variables independently.
-- `#SBATCH --output=logs/%x_%A_%a.out`: Saves output to the `logs` directory. `%x`, `%A`, and `%a` expand to the job name, job ID, and Slurm Array Task ID. <br> The directory will created if it does not exist already. 
+- `#SBATCH --array=0-9%2`: Creates an array of 10 tasks (IDs 0 through 9). Each runs the same script independently with different input values; `%2` limits execution to two tasks at a time. Resource requests apply to each task, so two running tasks use two CPUs and up to 2 GB RAM in total.
+- `#SBATCH --output=logs/%x_%A_%a.out`: Saves output to the `logs` directory. `%x`, `%A`, and `%a` expand to the job name, job ID, and Slurm Array Task ID. <br> **Create this directory before submission using `mkdir -p logs`; Slurm does not create it.**
 - `COUNT`, `START` and `END`: Defines variable syntax to set up the number of iterations and the range for each job.
 - `SLURM_ARRAY_TASK_ID`: Slurm environment variable that uniquely identifies each array task (0-9 here).
 - `time ./loop_script.sh ${START} ${END}`: Runs the counting script `loop_script.sh`. The two arguments accepted (starting and ending value to count) are now two variables `START` and `END`.
 
 **How the variables work**
 
-Each job in the array will have a different `SLURM_ARRAY_TASK_ID` set by `#SBATCH --array=0-9`.
+Each job in the array will have a different `SLURM_ARRAY_TASK_ID` set by `#SBATCH --array=0-9%2`.
 Using this value, the script calculates distinct numeric ranges so each job processes a separate portion of the total task.
 For the first job, `SLURM_ARRAY_TASK_ID` equals 0 and `COUNT` equals 5,000,000 so `START` equals 0 (i.e., 0 * 5000000). `END` for the first job equals 4,999,999 or (0 + 5000000 - 1).
-For the second job, `SLURM_ARRAY_TASK_ID` equals 1 so `START` equals 5,000,000 and `END` equals 9,999,999. And so on. 
+For the second job, `SLURM_ARRAY_TASK_ID` equals 1 so `START` equals 5,000,000 and `END` equals 9,999,999. And so on.
 The table below shows the variables `SLURM_ARRAY_TASK_ID`, `START`, and `END` for each job in the array.
 
 | SLURM_ARRAY_TASK_ID | START | END |
@@ -74,7 +81,7 @@ The table below shows the variables `SLURM_ARRAY_TASK_ID`, `START`, and `END` fo
 | 8 | 40,000,000 | 44,999,999 |
 | 9 | 45,000,000 | 49,999,999 |
 
-Thus, each job in `loop_array.slurm` executes `loop_script.sh` on a different, non-overlapping range of numbers. 
+Thus, each job in `loop_array.slurm` executes `loop_script.sh` on a different, non-overlapping range of numbers.
 
 > 💡 **TIP:** `$SLURM_ARRAY_TASK_ID` can also be used to select different input files or parameters, and to perform parameter sweeps. Always confirm your array indices (0-based vs 1-based) match your input list size.
 
@@ -83,7 +90,8 @@ Thus, each job in `loop_array.slurm` executes `loop_script.sh` on a different, n
 Exit the text editor with `Ctrl+X` and submit your array job:
 
 ```bash
-sbatch loop_array.slurm
+mkdir -p logs
+sbatch --account="$MY_ACCOUNT" loop_array.slurm
 ```
 
 Monitor progress:
@@ -95,8 +103,7 @@ watch -n 10 squeue -u $USER
 Once complete, you'll have 10 output files in `logs` directory. Check the output files:
 
 ```bash
-cd logs
-ls
+ls logs/
 ```
 
 You should see 10 output files similar to (but with 123456789 replaced by the JobID assigned to your array job when it was submitted):
@@ -111,14 +118,14 @@ loop_array_123456789_9.out
 Each file contains the output for one array task. For example:
 
 ```bash
-Starting task 0 on g004
+Starting task 0 on n3000
 Job array ID: 19158
 Sequence complete! Iterations from 0 to 4999999.
 
 real    0m14.119s
 user    0m14.083s
 sys     0m0.001s
-Task 0 completed at Mon Oct 20 10:26:43 PDT 2025
+Task 0 completed at <finish time>
 ```
 
 ## Controlling Parallelism
@@ -129,7 +136,7 @@ If you have a large array, you may not want all tasks running at once. You can u
 #SBATCH --array=0-9%5
 ```
 
-This runs 10 tasks total but limits to 5 simultaneous jobs. As each task finishes, a new one starts automatically.
+Changing the example's `%2` to `%5` runs 10 tasks total but permits up to 5 simultaneous tasks. As each task finishes, a new one starts automatically.
 
 ## Summary
 
@@ -142,4 +149,4 @@ This exercise demonstrates how to:
 Leveraging these techniques helps automate large-scale testing, parameter sweeps, and dataset processing for research computing projects. To learn more about Slurm’s environment variables, see the [**Slurm output environment variables documentation**](https://slurm.schedmd.com/sbatch.html#SECTION_OUTPUT-ENVIRONMENT-VARIABLES).
 
 > 💬 **Feedback Welcome:**
-> We hope this tutorial helps you design more efficient and scalable workflows on Tillicum. If you have any questions or suggestions for how to improve this tutorial, please email **\<help@uw.edu\>** with "Tillicum Slurm Tutorial" in the subject line, and let us know what you think. Thank you!
+> We hope this tutorial helps you design more efficient and scalable workflows on Klone. If you have any questions or suggestions for how to improve this tutorial, please email **\<help@uw.edu\>** with "Klone Slurm Tutorial" in the subject line, and let us know what you think. Thank you!

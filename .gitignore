@@ -1,0 +1,4 @@
+logs/
+slurm-*.out
+__pycache__/
+*.pyc
