@@ -1,7 +1,8 @@
 #!/bin/bash
 
 #SBATCH --job-name=pytorch
-#SBATCH --partition=ckpt-all
+#SBATCH --account=uwit
+#SBATCH --partition=gpu-2080ti
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --gpus-per-node=2080ti:1
@@ -10,16 +11,11 @@
 #SBATCH --time=00:10:00
 #SBATCH --output=logs/%x_%j.out
 
-# Submit from the repository directory with --account=<your_account>.
-# Set PYTORCH to an existing, readable CUDA-enabled PyTorch SIF on Klone.
-set -euo pipefail
-: "${PYTORCH:?Set PYTORCH to the absolute path of your PyTorch SIF before sbatch}"
-if [[ "$PYTORCH" != /* || ! -r "$PYTORCH" ]]; then
-    echo "PYTORCH must be an absolute path to a readable SIF: $PYTORCH" >&2
-    exit 1
-fi
-module load apptainer
+module load conda
+conda activate trainingslurm
+export PYTHONNOUSERSITE=1
+
 WORKDIR="$SLURM_SUBMIT_DIR"
 cd "$WORKDIR"
 export OMP_NUM_THREADS="$SLURM_CPUS_PER_TASK"
-apptainer exec --nv --bind /gscratch "$PYTORCH" python "$WORKDIR/pytorch_demo.py"
+python "$WORKDIR/pytorch_demo.py"

@@ -15,10 +15,10 @@ Replace `UWNetID` with your UW NetID.
 You will land on a shared login node, such as:
 
 ```
-[UWNetID@klone-login01 ~]$ 
+[UWNetID@klone-login01 ~]$
 ```
 
-Use login nodes to navigate files, transfer data, and prepare or submit jobs. Run computations and load software modules only after obtaining a compute node.
+Use login nodes to navigate files, transfer data, and prepare or submit jobs. Module commands are available on both login and compute nodes, but we recommend loading modules on compute nodes. Run computations only after obtaining a compute node.
 
 ## Create Your Working Directory
 
@@ -44,10 +44,11 @@ cd /gscratch/scrubbed/$USER
 git clone https://github.com/UWrc/klone-slurm.git
 ```
 
-Once cloned, you’ll have a directory named klone-slurm containing all tutorial scripts and examples.
+Once cloned, you’ll have a directory named `klone-slurm` containing all tutorial scripts and examples.
 
-List the contents in the directory:
+Enter the repository and list the contents of the directory:
 
 ```bash
+cd klone-slurm
 ls
 ```

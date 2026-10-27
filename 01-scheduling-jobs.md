@@ -14,13 +14,13 @@ Start with:
 hyakalloc
 ```
 
-`hyakalloc` shows your accounts, available resources, and utilization. 
+`hyakalloc` shows your accounts, available resources, and utilization.
 
 Your **account** identifies your lab/group allocation. A **partition** selects a pool of hardware. Klone's condo model gives groups priority access to contributed resources, with group-wide limits based on their contributions.
 
 Examples of hardware partitions include `compute`, memory-oriented partitions such as `compute-bigmem`, `cpu-g2`, `cpu-g2-mem2x`, and GPU partitions such as `gpu-2080ti`, `gpu-a40`, `gpu-a100`, `gpu-l40`, and `gpu-l40s`. Use current `hyakalloc` and `sinfo -s` output to choose. Access and available hardware vary.
 
-For this tutorial, use `--account=uwit` and `--partition=compute`. Always submit from the `klone-slurm` directory so relative script and log paths resolve correctly.
+For this tutorial, CPU jobs use `--account=uwit` and `--partition=compute`; GPU jobs use `--account=uwit` and `--partition=gpu-2080ti`. If you are following this tutorial outside the workshop, replace these with an account and partition you can access, as shown by `hyakalloc`. Always submit from the `klone-slurm` directory so relative script and log paths resolve correctly.
 
 ## Checkpoint Partitions and Preemption
 
@@ -34,7 +34,7 @@ For this tutorial, use `--account=uwit` and `--partition=compute`. Always submit
 > - Checkpoint jobs can be stopped and requeued without notice when resource contributors need them.
 > - They are also stopped and requeued periodically: approximately every 4–5 hours for CPU-only jobs and 8–9 hours for GPU jobs.
 > - Idle nodes do not guarantee an immediate start, and checkpoint jobs may also be throttled during heavy filesystem load; check `hyakalloc` for current limits.
-> 
+>
 > 📝 **NOTE: Requeueing does not save your application's in-memory state.** Production workflows must save checkpoints and reload them when restarted. Request the maximum expected runtime using `--time`; checkpoint preemption can happen sooner.
 
 See [Klone scheduler documentation](https://hyak.uw.edu/docs/systems/klone/scheduling-jobs/) for policies and details.
@@ -91,7 +91,7 @@ On Klone the shell moves to an allocated compute node:
 hostname
 ```
 
-Confirm the hostname changes from the login node (klone-login0*) to another Klone compute node (e.g, n3013).
+Confirm the hostname changes from the login node (klone-login0*) to another Klone compute node (e.g., n3013).
 
 Release the allocation when finished:
 
@@ -101,12 +101,12 @@ exit
 
 ## Interactive GPU Jobs (Optional)
 
-Inspect GPU resources, then request a specific type and count:
+Request a GPU from a specific GPU partition, or select a GPU type and count from checkpoint resources:
 
 ```bash
 salloc --account=uwit --partition=gpu-2080ti --nodes=1 --ntasks=1 --cpus-per-task=1 --gpus=1 --mem=8G --time=00:10:00
-# or to request GPU jobs in ckpt partition:
-salloc --account=uwit --nodes=1 --ntasks=1 --cpus-per-task=1 --gpus=2080ti:1 --mem=8G --time=00:10:00
+# Or request a GPU job in the checkpoint partition:
+salloc --account=uwit --partition=ckpt-all --nodes=1 --ntasks=1 --cpus-per-task=1 --gpus=2080ti:1 --mem=8G --time=00:10:00
 ```
 
 `2080ti:1` selects one 2080 Ti GPU. Device memory varies by model; `--mem=8G` requests host RAM and does not change device memory.
@@ -172,13 +172,13 @@ To check your running and pending jobs:
 squeue -u "$USER"
 ```
 
-Watch your queue refreshed every 10 seconds:
+Watch your queue refresh every 10 seconds:
 
 ```bash
 watch -n 10 squeue -u "$USER"
 ```
 
-`watch` command can be terminated with a keyboard interrupt `Ctrl+C`; this does not cancel your jobs.
+The `watch` command can be terminated with a keyboard interrupt `Ctrl+C`; this does not cancel your jobs.
 
 To understand `squeue` output:
 
@@ -191,7 +191,7 @@ To understand `squeue` output:
 | `TIME` | Elapsed runtime |
 | `NODELIST(REASON)` | Allocated node(s) or reason for pending (e.g., `Resources` or `Priority`) |
 
-For more details or to customize the output format of squeue, refer to [squeue manual](https://slurm.schedmd.com/squeue.html).
+For more details or to customize the output format of `squeue`, refer to the [squeue manual](https://slurm.schedmd.com/squeue.html).
 
 Completed jobs usually disappear from `squeue`; use `sacct` to inspect their history.
 

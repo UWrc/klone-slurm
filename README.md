@@ -14,7 +14,7 @@ Klone is Hyak's general-purpose HPC cluster, with CPU and GPU partitions and mul
 - Write Bash workflows and run independent tasks with Slurm arrays.
 - Choose resource sizes and understand checkpoint/preemption behavior.
 
-The core exercises use one CPU and require no GPU software. An optional PyTorch exercise introduces GPU requests.
+The core exercises use one CPU and require no GPU software. An optional PyTorch exercise introduces GPU requests using the `trainingslurm` Conda environment.
 
 ## Repository Structure
 
@@ -29,15 +29,15 @@ The core exercises use one CPU and require no GPU software. An optional PyTorch 
 
 ## Recording
 
-The 2026 recording link will be added after the workshop. 
+The 2026 recording link will be added after the workshop.
 
 ## Feedback
 
-We’d love your feedback to help improve this tutorial and future trainings. After completing the tutorial or attending the workshop, please take a moment to fill out our [feedback survey](https://forms.cloud.microsoft/r/pvcRwSb2th).
+We’d love your feedback to help improve this tutorial and future training sessions. After completing the tutorial or attending the workshop, please take a moment to fill out our [feedback survey](https://forms.cloud.microsoft/r/pvcRwSb2th).
 
 ## Additional Resources
 
-- [Hyak Klone Documentation](https://hyak.uw.edu/docs/klone/)
+- [Hyak Klone Documentation](https://hyak.uw.edu/docs/systems/klone/get-started/)
 - [Slurm Documentation](https://slurm.schedmd.com/documentation.html)
 - Previous Hyak Klone Slurm tutorials:
   - [Basic Slurm](https://hyak.uw.edu/docs/hyak101/basics/syllabus_slurm)

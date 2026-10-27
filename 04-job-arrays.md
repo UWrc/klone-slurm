@@ -11,7 +11,7 @@ This is common when testing different configurations in simulations, running ana
 
 Let's run an array job with `loop_array.slurm` in your working directory.
 
-Submit from the repository directory on the login node. This is CPU-only work, so each task requests one CPU and no GPUs. Runtime varies by node; the sample timings below are illustrative.
+Submit from the repository directory on the login node. This is CPU-only work, so each task requests one CPU and no GPUs. Runtime varies by node.
 
 ## Example Slurm Script for Array Job
 
@@ -53,14 +53,14 @@ echo "Task $SLURM_ARRAY_TASK_ID completed at $(date)"
 
 **Explanation:**
 - `#SBATCH --array=0-9%2`: Creates an array of 10 tasks (IDs 0 through 9). Each runs the same script with different input values determined by the variables independently.
-- `#SBATCH --output=logs/%x_%A_%a.out`: Saves output to the `logs` directory. `%x`, `%A`, and `%a` expand to the job name, job ID, and Slurm Array Task ID. <br> The directory will created if it does not exist already. 
-- `COUNT`, `START` and `END`: Defines variable syntax to set up the number of iterations and the range for each job.
+- `#SBATCH --output=logs/%x_%A_%a.out`: Saves output to the `logs` directory. `%x`, `%A`, and `%a` expand to the job name, job ID, and Slurm Array Task ID. <br> The directory will be created automatically if it does not exist already.
+- `COUNT`, `START`, and `END`: Define the number of iterations and the range for each task.
 - `SLURM_ARRAY_TASK_ID`: Slurm environment variable that uniquely identifies each array task (0-9 here).
 - `time ./loop_script.sh ${START} ${END}`: Runs the counting script `loop_script.sh`. The two arguments accepted (starting and ending value to count) are now two variables `START` and `END`.
 
 **How the variables work**
 
-Each job in the array will have a different `SLURM_ARRAY_TASK_ID` set by `#SBATCH --array=0-9%2`.
+Each job in the array will have a different `SLURM_ARRAY_TASK_ID` set by `#SBATCH --array=0-9`.
 Using this value, the script calculates distinct numeric ranges so each job processes a separate portion of the total task.
 For the first job, `SLURM_ARRAY_TASK_ID` equals 0 and `COUNT` equals 5,000,000 so `START` equals 0 (i.e., 0 * 5000000). `END` for the first job equals 4,999,999 or (0 + 5000000 - 1).
 For the second job, `SLURM_ARRAY_TASK_ID` equals 1 so `START` equals 5,000,000 and `END` equals 9,999,999. And so on.
@@ -97,7 +97,7 @@ Monitor progress:
 watch -n 10 squeue -u $USER
 ```
 
-Once complete, you'll have 10 output files in `logs` directory. Check the output files:
+Once complete, you'll have 10 output files in the `logs` directory. Check the output files:
 
 ```bash
 ls logs/
@@ -116,7 +116,7 @@ Each file contains the output for one array task.
 
 ## Controlling Parallelism
 
-If you have a large array, you may not want all tasks running at once. You can use the % separator to cap how many array task run concurrently:
+If you have a large array, you may not want all tasks running at once. You can use the % separator to cap how many array tasks run concurrently:
 
 ```bash
 #SBATCH --array=0-9%5

@@ -113,13 +113,13 @@ echo "Job finished at: $(date)"
 ```
 
 **Explanation**
-- #!/bin/bash: Tells the system to use Bash to interpret this file.
-- #SBATCH lines: Slurm directives that define resources and job options.
+- `#!/bin/bash`: Tells the system to use Bash to interpret this file.
+- `#SBATCH` lines: Slurm directives that define resources and job options.
 - Environment setup: Such as `module load conda`, `conda activate myenv`, `export PATH`
 - Workflow commands: The actual computation or analysis.
 - `echo` commands: Print logs and timestamps to track job progress.
 
-> 💡 **TIP:** All #SBATCH directives must appear before the first executable command in the script.
+> 💡 **TIP:** All `#SBATCH` directives must appear before the first executable command in the script.
 
 Return to the login node with `exit` if you are still in an interactive allocation.
 
@@ -190,7 +190,7 @@ echo "Job completed successfully!"
 
 Most HPC software relies on modules and environment variables to configure runtime environments. See [Software Environment on Klone](https://hyak.uw.edu/docs/guides/software/modules/) for more details on how modules are managed on Klone.
 
-On Klone, modules are available on both login and compute nodes, including inside batch jobs. You can safely load them inside your job script before running commands.
+On Klone, module commands are available on both login and compute nodes. We recommend loading modules on compute nodes, including inside batch jobs, before running your workflow.
 
 Example:
 

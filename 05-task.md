@@ -14,11 +14,9 @@ You'll practice an interactive CPU session, a Python batch job, and a CPU job ar
 - [2. Load the Conda Module](#2-load-the-conda-module)
 - [3. Run a Simple Python Script](#3-run-a-simple-python-script)
 - [4. Run a CPU Batch Job](#4-run-a-cpu-batch-job)
-- [4. Run a CPU Array Job](#4-run-a-cpu-array-job)
-- [5. Inspect Usage and Release Resources](#5-inspect-usage-and-release-resources)
+- [5. Run a CPU Array Job](#5-run-a-cpu-array-job)
+- [6. Inspect Usage and Release Resources](#6-inspect-usage-and-release-resources)
 - [Optional: GPU Jobs with PyTorch](#optional-gpu-jobs-with-pytorch)
-  - [Single GPU Batch Job](#single-gpu-batch-job)
-  - [GPU Array Job](#gpu-array-job)
 - [Optional: Cleanup](#optional-cleanup)
 
 ## 0. Preparation
@@ -43,15 +41,15 @@ hostname
 
 ## 2. Load the Conda Module
 
-Klone provides a shared Miniforge (Conda) module with Python preinstalled. Load Conda module on the compute node:
+Klone provides a shared Miniforge (Conda) module with Python preinstalled. Load the Conda module on the compute node:
 
 ```bash
 module load conda
 ```
 
-You can explore available softwares with `module avail` or `module spider`. See [Python and Conda](https://hyak.uw.edu/docs/guides/software/conda-python/) and [Software Environment on Klone](https://hyak.uw.edu/docs/guides/software/modules) for more details on how softwares are managed on Klone.
+You can explore available software with `module avail` or `module spider`. See [Python and Conda](https://hyak.uw.edu/docs/guides/software/conda-python/) and [Software Environment on Klone](https://hyak.uw.edu/docs/guides/software/modules) for more details on how software is managed on Klone.
 
-Activate Conda base environment and onfirm that Python is available:
+Activate the Conda base environment and confirm that Python is available:
 
 ```bash
 conda activate
@@ -134,7 +132,7 @@ sacct -j <job_id> -o JobID,State,Elapsed,ExitCode
 
 A successful job should have state `COMPLETED` and exit code `0:0`.
 
-## 4. Run a CPU Array Job
+## 5. Run a CPU Array Job
 
 Job arrays are an efficient way to submit and manage multiple similar jobs in parallel.
 
@@ -156,7 +154,7 @@ ls logs/loop_array_*.out
 
 Each log should report a distinct, non-overlapping range of numbers. Use `sacct -j <array_job_id>` to inspect the states of individual tasks.
 
-## 5. Inspect Usage and Release Resources
+## 6. Inspect Usage and Release Resources
 
 ```bash
 hyakalloc
@@ -173,21 +171,7 @@ scancel <job_id>
 
 ## Optional: GPU Jobs with PyTorch
 
-You need a **Conda environment with CUDA-enabled PyTorch installed on Klone**.
-
-On the login node, set the path before submission:
-
-```bash
-# Replace this example path with the actual readable SIF supplied for the workshop.
-export PYTORCH=/gscratch/your-group/containers/pytorch.sif
-test -r "$PYTORCH" && echo "Container is readable"
-```
-
-Do not proceed unless it is readable. The batch scripts receive the exported variable through Slurm's default environment export. The supplied scripts select one `2080ti` GPU from `ckpt-all`; use the current resource listing and instructor guidance if choosing another model:
-
-```bash
-sinfo -p ckpt-all -O nodehost,cpusstate,freemem,gres,gresused -S nodehost | grep -v null
-```
+The workshop uses the `trainingslurm` Conda environment with CUDA-enabled PyTorch installed on Klone. Load and activate it on the allocated compute node before running Python commands. `PYTHONNOUSERSITE=1` prevents Python from importing packages from your user site-packages directory, helping avoid conflicts with the training environment.
 
 For an interactive GPU check:
 
@@ -195,12 +179,16 @@ For an interactive GPU check:
 salloc -A uwit -p gpu-2080ti -N 1 -c 1 -G 1 --mem=8G --time=00:30:00
 hostname
 nvidia-smi
+module load conda
+conda activate trainingslurm
+export PYTHONNOUSERSITE=1
+python -c 'import torch; print("PyTorch:", torch.__version__); print("CUDA available:", torch.cuda.is_available())'
 exit
 ```
 
-`nvidia-smi` should report the selected GPU. `--mem=8G` requests host RAM; device memory is fixed by the GPU model. See [GPUs on Klone](https://hyak.uw.edu/docs/systems/klone/gpus/).
+`nvidia-smi` should report the selected GPU, and PyTorch should report `CUDA available: True`. `--mem=8G` requests host RAM; device memory is fixed by the GPU model. See [GPUs on Klone](https://hyak.uw.edu/docs/systems/klone/gpus/).
 
-### Single GPU Batch Job
+**Single GPU Batch Job**
 
 Back on the login node, inspect the Python script and batch wrapper:
 
@@ -213,7 +201,8 @@ cat pytorch_demo.slurm
 #!/bin/bash
 
 #SBATCH --job-name=pytorch
-#SBATCH --partition=ckpt-all
+#SBATCH --account=uwit
+#SBATCH --partition=gpu-2080ti
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --gpus-per-node=2080ti:1
@@ -222,28 +211,23 @@ cat pytorch_demo.slurm
 #SBATCH --time=00:10:00
 #SBATCH --output=logs/%x_%j.out
 
-# Submit from the repository directory with --account=<your_account>.
-# Set PYTORCH to an existing, readable CUDA-enabled PyTorch SIF on Klone.
-set -euo pipefail
-: "${PYTORCH:?Set PYTORCH to the absolute path of your PyTorch SIF before sbatch}"
-if [[ "$PYTORCH" != /* || ! -r "$PYTORCH" ]]; then
-    echo "PYTORCH must be an absolute path to a readable SIF: $PYTORCH" >&2
-    exit 1
-fi
-module load apptainer
+# Load the training environment on the allocated compute node.
+module load conda
+conda activate trainingslurm
+export PYTHONNOUSERSITE=1
+
 WORKDIR="$SLURM_SUBMIT_DIR"
 cd "$WORKDIR"
 export OMP_NUM_THREADS="$SLURM_CPUS_PER_TASK"
-apptainer exec --nv --bind /gscratch "$PYTORCH" python "$WORKDIR/pytorch_demo.py"
+python "$WORKDIR/pytorch_demo.py"
 ```
 
-The script loads the Apptainer module on the compute node. `--nv` exposes NVIDIA GPUs inside the container, and `--bind /gscratch` exposes Klone's scratch filesystem. Keep the repository and SIF under `/gscratch` for this example. Commands use the submission directory rather than a hard-coded user path.
+The script loads Conda, activates `trainingslurm`, and sets `PYTHONNOUSERSITE=1` on the compute node. It runs the Python script directly from the submission directory. Each batch job configures its own environment.
 
-Submit from the repository directory after setting `PYTORCH`:
+Submit from the repository directory:
 
 ```bash
-mkdir -p logs
-sbatch --account="$MY_ACCOUNT" pytorch_demo.slurm
+sbatch pytorch_demo.slurm
 squeue -u "$USER"
 ```
 
@@ -251,29 +235,10 @@ After completion (replace `<job_id>`):
 
 ```bash
 cat logs/pytorch_<job_id>.out
-cat logs/results_<job_id>_task_0.txt
+cat logs/results_<job_id>.txt
 ```
 
-The program reports the detected GPU, performs a small matrix multiplication, and writes a checksum and runtime. It fails if CUDA is unavailable, so an incompatible container or missing GPU is visible as a failed job. Runtime and checksum vary.
-
-### GPU Array Job
-
-```bash
-cat pytorch_array.slurm
-sbatch --account="$MY_ACCOUNT" pytorch_array.slurm
-```
-
-`--array=0-4%2` creates five tasks and permits up to two concurrent tasks. Each requests one GPU and 8 GB of host RAM. Each array index selects a different learning-rate label; the matrix operation is a demonstration, not model training, and does not use that learning rate.
-
-After the array finishes, substitute its job ID:
-
-```bash
-ls logs/pytorch_array_<array_job_id>_*.out
-cat logs/results_<array_job_id>_task_*.txt
-sacct -j <array_job_id> -o JobID,State,Elapsed,ExitCode
-```
-
-Result filenames include the job/array ID and task ID so separate submissions do not overwrite each other's results. These GPU examples restart from scratch if preempted; production training must implement checkpoint saving and resuming.
+The program reports the detected GPU, performs a small matrix multiplication, and writes a checksum and runtime. It fails if CUDA is unavailable, so an incorrect Python environment or missing GPU is visible as a failed job. Runtime and checksum vary.
 
 ## Optional: Cleanup
 
@@ -282,5 +247,3 @@ After all tutorial jobs have finished or been cancelled and you have saved any r
 ```bash
 rm -r logs
 ```
-
-Recreate it with `mkdir -p logs` before submitting further jobs.
