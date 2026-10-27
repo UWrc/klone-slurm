@@ -1,43 +1,85 @@
+<!-- omit in toc -->
 # Hands-on Exercise: Running Jobs on Klone
 
-Practice an interactive CPU session, a Python batch job, and a CPU job array. Then optionally run GPU jobs with PyTorch. Complete [preparation](./00-preparation.md) first: log in to Klone, enter your clone of `klone-slurm`, create `logs/`, and set `MY_ACCOUNT` to your real Slurm account.
+This hands-on exercise walks you through the essential steps of submitting and monitoring jobs on Klone.
+
+You'll practice an interactive CPU session, a Python batch job, and a CPU job array. Then optionally run GPU jobs with PyTorch.
+
+> 🎯 **GOAL:** Learn how to load your computing environment and run jobs efficiently on Klone.
+
+**Overview**
+
+- [0. Preparation](#0-preparation)
+- [1. Start an Interactive CPU Job](#1-start-an-interactive-cpu-job)
+- [2. Load the Conda Module](#2-load-the-conda-module)
+- [3. Run a Simple Python Script](#3-run-a-simple-python-script)
+- [4. Run a CPU Batch Job](#4-run-a-cpu-batch-job)
+- [4. Run a CPU Array Job](#4-run-a-cpu-array-job)
+- [5. Inspect Usage and Release Resources](#5-inspect-usage-and-release-resources)
+- [Optional: GPU Jobs with PyTorch](#optional-gpu-jobs-with-pytorch)
+  - [Single GPU Batch Job](#single-gpu-batch-job)
+  - [GPU Array Job](#gpu-array-job)
+- [Optional: Cleanup](#optional-cleanup)
+
+## 0. Preparation
+
+If you haven't already, follow the instructions in [00-preparation](./00-preparation.md) to log in to Klone and set up your working directory for the following exercise.
 
 ## 1. Start an Interactive CPU Job
+
+> ⚠️ **WARNING: All compute work must be done on compute nodes.**
 
 From the login node, request one CPU for 30 minutes:
 
 ```bash
-salloc --account="$MY_ACCOUNT" --partition=ckpt-all --nodes=1 --ntasks=1 --cpus-per-task=1 --mem=1G --time=00:30:00
+salloc -A uwit -p compute -N 1 -c 1 --mem=1G --time=00:30:00
+```
+
+Once resources are allocated, confirm you’re on a compute node:
+
+```bash
 hostname
 ```
 
-Wait for the allocation and confirm you are on a compute node. If your account has a suitable priority partition, use it instead of `ckpt-all` for interactive work. Checkpoint allocations can be interrupted; see [scheduling jobs](./01-scheduling-jobs.md#checkpoint-partitions-and-preemption).
+## 2. Load the Conda Module
 
-## 2. Load Python and Run a Script
-
-On the compute node:
+Klone provides a shared Miniforge (Conda) module with Python preinstalled. Load Conda module on the compute node:
 
 ```bash
 module load conda
-conda activate base
-python --version
-which python
-python python_demo.py
 ```
 
-Klone supports the shared Conda module. Modules are available only on compute nodes, including batch jobs. See [Python and Conda](https://hyak.uw.edu/docs/guides/software/conda-python/) and [Modules](https://hyak.uw.edu/docs/guides/software/modules/).
+You can explore available softwares with `module avail` or `module spider`. See [Python and Conda](https://hyak.uw.edu/docs/guides/software/conda-python/) and [Software Environment on Klone](https://hyak.uw.edu/docs/guides/software/modules) for more details on how softwares are managed on Klone.
+
+Activate Conda base environment and onfirm that Python is available:
+
+```bash
+conda activate
+which python
+python --version
+```
+
+You’ll see the system Miniforge Python path under `/mmfs1/sw/miniforge3/25.9.1-0/bin/python`.
+
+## 3. Run a Simple Python Script
+
+Run the provided example Python script:
+
+```bash
+python python_demo.py
+```
 
 The script prints a greeting, Python version, and optional CUDA information before exiting. For example:
 
 ```text
 Starting Klone Python demo job...
-Python version: <installed version>
+Python version: 3.12.12
 Checking CUDA availability...
 PyTorch not installed; skipping GPU check.
 Job completed successfully.
 ```
 
-The exact Python version and CUDA message depend on the environment. This CPU exercise needs no PyTorch installation or GPU. If PyTorch is present, CUDA should be unavailable in this CPU-only allocation.
+> 📝 **NOTE:** The exact Python version and CUDA message depend on the environment. In the base Conda environment, CUDA may appear unavailable because GPU-enabled libraries (e.g., PyTorch or TensorFlow) are not installed. That’s expected for this exercise.
 
 Release your allocation:
 
@@ -45,7 +87,7 @@ Release your allocation:
 exit
 ```
 
-## 3. Submit a CPU Batch Job
+## 4. Run a CPU Batch Job
 
 Back on the login node, view the script:
 
@@ -57,7 +99,8 @@ cat python_demo.slurm
 #!/bin/bash
 
 #SBATCH --job-name=python_demo
-#SBATCH --partition=ckpt-all
+#SBATCH --account=uwit
+#SBATCH --partition=compute
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
@@ -65,22 +108,24 @@ cat python_demo.slurm
 #SBATCH --time=00:05:00
 #SBATCH --output=logs/%x_%j.out
 
-# Submit from the repository directory with --account=<your_account>.
-set -euo pipefail
 module load conda
 conda activate base
 python "$SLURM_SUBMIT_DIR/python_demo.py"
 ```
 
-The batch job loads its own environment. From the repository directory:
+The batch job loads its own environment. Submit the job from the repository directory:
 
 ```bash
-mkdir -p logs
-sbatch --account="$MY_ACCOUNT" python_demo.slurm
-squeue -u "$USER"
+sbatch python_demo.slurm
 ```
 
-Record the returned job ID. After it finishes, inspect its log (replace `<job_id>`):
+Check the status of the job:
+
+```bash
+squeue -u $USER
+```
+
+Record the returned job ID. After it finishes, view the standard output of the job (replace `<job_id>`):
 
 ```bash
 cat logs/python_demo_<job_id>.out
@@ -89,17 +134,19 @@ sacct -j <job_id> -o JobID,State,Elapsed,ExitCode
 
 A successful job should have state `COMPLETED` and exit code `0:0`.
 
-## 4. Submit a CPU Array
+## 4. Run a CPU Array Job
+
+Job arrays are an efficient way to submit and manage multiple similar jobs in parallel.
 
 Review [job arrays](./04-job-arrays.md) and the supplied script:
 
 ```bash
 cat loop_array.slurm
-sbatch --account="$MY_ACCOUNT" loop_array.slurm
+sbatch loop_array.slurm
 watch -n 10 squeue -u "$USER"
 ```
 
-Stop watching with `Ctrl+C`. The directive `--array=0-9%2` creates ten independent tasks with at most two running at once. Each task requests one CPU and 1 GB host RAM, with no GPU.
+Stop watching with `Ctrl+C`. The directive `--array=0-9` creates ten independent tasks. Each task requests one CPU and 1 GB host RAM, with no GPU.
 
 After completion:
 
@@ -116,7 +163,7 @@ hyakalloc
 sacct -j <job_id> -o JobID,State,Elapsed,TotalCPU,MaxRSS,ReqMem,ExitCode
 ```
 
-Where installed, `seff <job_id>` also summarizes CPU/memory efficiency. Use [monitoring resource usage](./02-monitoring-resource.md) to interpret these statistics. Small demonstration jobs may show very low usage or sparse accounting samples.
+`seff <job_id>` also summarizes CPU/memory efficiency. Use [monitoring resource usage](./02-monitoring-resource.md) to interpret these statistics. Small demonstration jobs may show very low usage or sparse accounting samples.
 
 Cancel any pending or running tutorial jobs you no longer need:
 
@@ -126,7 +173,7 @@ scancel <job_id>
 
 ## Optional: GPU Jobs with PyTorch
 
-You need a **CUDA-enabled PyTorch Apptainer SIF already accessible on Klone**. Ask the instructor for its tested absolute path, or use your own compatible image. The image and GPU driver must support the selected GPU model. This exercise does not build or download an image.
+You need a **Conda environment with CUDA-enabled PyTorch installed on Klone**.
 
 On the login node, set the path before submission:
 
@@ -145,7 +192,7 @@ sinfo -p ckpt-all -O nodehost,cpusstate,freemem,gres,gresused -S nodehost | grep
 For an interactive GPU check:
 
 ```bash
-salloc --account="$MY_ACCOUNT" --partition=ckpt-all --nodes=1 --ntasks=1 --cpus-per-task=1 --gpus-per-node=2080ti:1 --mem=8G --time=00:30:00
+salloc -A uwit -p gpu-2080ti -N 1 -c 1 -G 1 --mem=8G --time=00:30:00
 hostname
 nvidia-smi
 exit

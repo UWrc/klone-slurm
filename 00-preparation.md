@@ -46,13 +46,6 @@ git clone https://github.com/UWrc/klone-slurm.git
 
 Once cloned, you’ll have a directory named klone-slurm containing all tutorial scripts and examples.
 
-**4. Navigate into it and create `logs/` for output files**
-
-```bash
-cd klone-slurm
-mkdir -p logs
-```
-
 List the contents in the directory:
 
 ```bash

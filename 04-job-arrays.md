@@ -25,21 +25,19 @@ nano loop_array.slurm
 #!/bin/bash
 
 #SBATCH --job-name=loop_array
-#SBATCH --partition=ckpt-all
+#SBATCH --account=uwit
+#SBATCH --partition=compute
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=1G
 #SBATCH --time=00:05:00
-#SBATCH --array=0-9%2
+#SBATCH --array=0-9
 #SBATCH --output=logs/%x_%A_%a.out
-
-# Submit from the repository directory with --account=<your_account>.
-set -euo pipefail
 
 # Each array task runs the same code with different ranges of numbers.
 # COUNT sets the number of iterations per task.
-# Runtime varies with the CPU model and system load.
+# Runtime varies with the CPU type and system load.
 COUNT=5000000
 
 # Use the array index SLURM_ARRAY_TASK_ID to set up the starting and ending point for each task.
@@ -54,8 +52,8 @@ echo "Task $SLURM_ARRAY_TASK_ID completed at $(date)"
 ```
 
 **Explanation:**
-- `#SBATCH --array=0-9%2`: Creates an array of 10 tasks (IDs 0 through 9). Each runs the same script independently with different input values; `%2` limits execution to two tasks at a time. Resource requests apply to each task, so two running tasks use two CPUs and up to 2 GB RAM in total.
-- `#SBATCH --output=logs/%x_%A_%a.out`: Saves output to the `logs` directory. `%x`, `%A`, and `%a` expand to the job name, job ID, and Slurm Array Task ID. <br> **Create this directory before submission using `mkdir -p logs`; Slurm does not create it.**
+- `#SBATCH --array=0-9%2`: Creates an array of 10 tasks (IDs 0 through 9). Each runs the same script with different input values determined by the variables independently.
+- `#SBATCH --output=logs/%x_%A_%a.out`: Saves output to the `logs` directory. `%x`, `%A`, and `%a` expand to the job name, job ID, and Slurm Array Task ID. <br> The directory will created if it does not exist already. 
 - `COUNT`, `START` and `END`: Defines variable syntax to set up the number of iterations and the range for each job.
 - `SLURM_ARRAY_TASK_ID`: Slurm environment variable that uniquely identifies each array task (0-9 here).
 - `time ./loop_script.sh ${START} ${END}`: Runs the counting script `loop_script.sh`. The two arguments accepted (starting and ending value to count) are now two variables `START` and `END`.
@@ -90,8 +88,7 @@ Thus, each job in `loop_array.slurm` executes `loop_script.sh` on a different, n
 Exit the text editor with `Ctrl+X` and submit your array job:
 
 ```bash
-mkdir -p logs
-sbatch --account="$MY_ACCOUNT" loop_array.slurm
+sbatch loop_array.slurm
 ```
 
 Monitor progress:
@@ -115,18 +112,7 @@ loop_array_123456789_6.out  loop_array_123456789_7.out  loop_array_123456789_8.o
 loop_array_123456789_9.out
 ```
 
-Each file contains the output for one array task. For example:
-
-```bash
-Starting task 0 on n3000
-Job array ID: 19158
-Sequence complete! Iterations from 0 to 4999999.
-
-real    0m14.119s
-user    0m14.083s
-sys     0m0.001s
-Task 0 completed at <finish time>
-```
+Each file contains the output for one array task.
 
 ## Controlling Parallelism
 
@@ -136,7 +122,7 @@ If you have a large array, you may not want all tasks running at once. You can u
 #SBATCH --array=0-9%5
 ```
 
-Changing the example's `%2` to `%5` runs 10 tasks total but permits up to 5 simultaneous tasks. As each task finishes, a new one starts automatically.
+This runs 10 tasks total but limits to 5 simultaneous jobs. As each task finishes, a new one starts automatically.
 
 ## Summary
 

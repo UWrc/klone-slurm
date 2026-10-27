@@ -1,16 +1,14 @@
 #!/bin/bash
 
 #SBATCH --job-name=loop_job
-#SBATCH --partition=ckpt-all
+#SBATCH --account=uwit
+#SBATCH --partition=compute
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=1G
 #SBATCH --time=00:10:00
 #SBATCH --output=logs/slurm-%j.out
-
-# Submit from the repository directory with --account=<your_account>.
-set -euo pipefail
 
 # Print environment info
 echo "Running on host: $(hostname)"

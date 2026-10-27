@@ -45,9 +45,10 @@ done
 - `for` loop: Iterates from the start to the end value.
 - `echo`: Prints a message once the loop completes.
 
-First obtain a CPU allocation as shown in [scheduling jobs](./01-scheduling-jobs.md#interactive-cpu-jobs). To run it interactively on the compute node, use `./` with the desired starting and ending values:
+First obtain a CPU allocation to run it interactively on the compute node; then use `./` with the desired starting and ending values:
 
 ```bash
+salloc --account=uwit --partition=compute --nodes=1 --ntasks=1 --cpus-per-task=1 --mem=1G --time=00:10:00
 ./loop_script.sh 0 1000000
 ```
 
@@ -68,9 +69,9 @@ The output should look something like this:
 ```bash
 Sequence complete! Iterations from 0 to 1000000.
 
-real	0m2.855s
-user	0m2.848s
-sys	    0m0.004s
+real	0m4.878s
+user	0m4.852s
+sys   0m0.012s
 ```
 
 We'll now run this same command as a batch job so it can run unattended through Slurm.
@@ -92,16 +93,14 @@ Let's look at a minimal working example `loop_job.slurm`:
 #!/bin/bash
 
 #SBATCH --job-name=loop_job
-#SBATCH --partition=ckpt-all
+#SBATCH --account=uwit
+#SBATCH --partition=compute
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=1G
 #SBATCH --time=00:10:00
 #SBATCH --output=logs/slurm-%j.out
-
-# Submit from the repository directory with --account=<your_account>.
-set -euo pipefail
 
 # Print environment info
 echo "Running on host: $(hostname)"
@@ -122,16 +121,12 @@ echo "Job finished at: $(date)"
 
 > 💡 **TIP:** All #SBATCH directives must appear before the first executable command in the script.
 
-Return to the login node with `exit` if you are still in an interactive allocation. From the repository directory, create the log directory before submission:
-
-```bash
-mkdir -p logs
-```
+Return to the login node with `exit` if you are still in an interactive allocation.
 
 Submit the job with:
 
 ```bash
-sbatch --account="$MY_ACCOUNT" loop_job.slurm
+sbatch loop_job.slurm
 ```
 
 Check job output:
@@ -143,13 +138,13 @@ cat logs/slurm-<job_id>.out
 Example output:
 
 ```bash
-Running on host: n3000
+Running on host: n3013
 Job started at: <start time>
 Sequence complete! Iterations from 0 to 1000000.
 
-real    0m2.762s
-user    0m2.756s
-sys     0m0.000s
+real    0m4.802s
+user    0m4.784s
+sys     0m0.005s
 Job finished at: <finish time>
 ```
 
@@ -165,16 +160,14 @@ Example `loop_var.slurm`:
 #!/bin/bash
 
 #SBATCH --job-name=loop_var
-#SBATCH --partition=ckpt-all
+#SBATCH --account=uwit
+#SBATCH --partition=compute
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
 #SBATCH --mem=1G
 #SBATCH --time=00:10:00
 #SBATCH --output=logs/slurm-%j.out
-
-# Submit from the repository directory with --account=<your_account>.
-set -euo pipefail
 
 # Define variables
 WORKDIR="$SLURM_SUBMIT_DIR"
@@ -189,7 +182,7 @@ time "./$SCRIPT" 0 1000000
 echo "Job completed successfully!"
 ```
 
-`SLURM_SUBMIT_DIR` is the directory from which you called `sbatch`; submit from the repository root. Quote variable expansions used as paths. Shell variables are expanded in commands, but Slurm does not expand `$USER` or `$MY_ACCOUNT` inside `#SBATCH` directives. Pass the account on the command line as shown above.
+`SLURM_SUBMIT_DIR` is the directory from which you called `sbatch`; submit from the repository root. Shell variables are expanded in commands, but Slurm does not expand `$USER` inside `#SBATCH` directives.
 
 ## Loading Modules and Setting Environment
 
@@ -197,7 +190,7 @@ echo "Job completed successfully!"
 
 Most HPC software relies on modules and environment variables to configure runtime environments. See [Software Environment on Klone](https://hyak.uw.edu/docs/guides/software/modules/) for more details on how modules are managed on Klone.
 
-On Klone, modules are available on compute nodes, including inside batch jobs. Load them there before running commands. The loop examples use Bash alone and need no modules.
+On Klone, modules are available on both login and compute nodes, including inside batch jobs. You can safely load them inside your job script before running commands.
 
 Example:
 
@@ -235,7 +228,7 @@ Explicitly specify `--output` and `--error` flags to save standard output and er
 #SBATCH --error=logs/slurm_%j.err
 ```
 
-**Create `logs/` with `mkdir -p logs` before calling `sbatch`.** Slurm opens log files before executing the script, so creating the directory inside the job is too late.
+This approach helps organize job logs by job ID under a designated directory such as `logs/`.
 
 To control whether Slurm appends or overwrites existing files:
 
