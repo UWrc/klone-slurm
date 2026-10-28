@@ -31,6 +31,8 @@ The core exercises use one CPU and require no GPU software. An optional PyTorch 
 
 The 2026 recording link will be added after the workshop.
 
+[Slide Deck](./slide_klone_slurm.pdf) from live tutorial on Oct 27, 2026
+
 ## Feedback
 
 We’d love your feedback to help improve this tutorial and future training sessions. After completing the tutorial or attending the workshop, please take a moment to fill out our [feedback survey](https://forms.cloud.microsoft/r/pvcRwSb2th).

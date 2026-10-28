@@ -52,7 +52,7 @@ echo "Task $SLURM_ARRAY_TASK_ID completed at $(date)"
 ```
 
 **Explanation:**
-- `#SBATCH --array=0-9%2`: Creates an array of 10 tasks (IDs 0 through 9). Each runs the same script with different input values determined by the variables independently.
+- `#SBATCH --array=0-9`: Creates an array of 10 tasks (IDs 0 through 9). Each runs the same script with different input values determined by the variables independently.
 - `#SBATCH --output=logs/%x_%A_%a.out`: Saves output to the `logs` directory. `%x`, `%A`, and `%a` expand to the job name, job ID, and Slurm Array Task ID. <br> The directory will be created automatically if it does not exist already.
 - `COUNT`, `START`, and `END`: Define the number of iterations and the range for each task.
 - `SLURM_ARRAY_TASK_ID`: Slurm environment variable that uniquely identifies each array task (0-9 here).
